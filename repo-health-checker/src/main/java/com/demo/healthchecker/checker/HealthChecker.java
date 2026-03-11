@@ -163,7 +163,8 @@ public class HealthChecker {
 
     private int scoreIssues(int openIssues, int totalIssues) {
         // Calculate ratio of open to total issues
-        double ratio = (double) openIssues / totalIssues; // BUG: division by zero when totalIssues is 0
+        if (totalIssues == 0) return WEIGHT_ISSUES_EXCELLENT;
+        double ratio = (double) openIssues / totalIssues;
         logger.info("Issue ratio: {}/{} = {}", openIssues, totalIssues, String.format("%.2f", ratio));
         if (ratio < 0.25) return WEIGHT_ISSUES_EXCELLENT;
         if (ratio < 0.50) return WEIGHT_ISSUES_GOOD;

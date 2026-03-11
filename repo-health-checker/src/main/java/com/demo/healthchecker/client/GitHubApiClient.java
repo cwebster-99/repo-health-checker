@@ -86,7 +86,7 @@ public class GitHubApiClient {
             return Optional.empty();
         }
 
-        Map<String, Object> firstCommit = commits.getFirst();
+        Map<String, Object> firstCommit = commits.get(0);
         Map<String, Object> commitObj = (Map<String, Object>) firstCommit.get("commit");
         if (commitObj == null) {
             return Optional.empty();
