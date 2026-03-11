@@ -1,5 +1,11 @@
 package com.demo.healthchecker;
 
+import com.demo.healthchecker.checker.AiReadinessChecker;
+import com.demo.healthchecker.checker.HealthChecker;
+import com.demo.healthchecker.client.GitHubApiClient;
+import com.demo.healthchecker.formatter.ReportFormatter;
+import com.demo.healthchecker.model.AiReadinessReport;
+import com.demo.healthchecker.model.RepoHealthReport;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -26,8 +32,23 @@ public class App implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        // TODO: implement health check logic
-        System.out.println("Checking repository: " + repo);
+        String[] parts = repo.split("/", 2);
+        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            System.err.println("Error: --repo must be in owner/name format, e.g. octocat/Hello-World");
+            return 1;
+        }
+        String owner = parts[0];
+        String name = parts[1];
+
+        GitHubApiClient client = new GitHubApiClient(token);
+        HealthChecker healthChecker = new HealthChecker(client);
+        AiReadinessChecker aiChecker = new AiReadinessChecker(client);
+        ReportFormatter formatter = new ReportFormatter();
+
+        RepoHealthReport healthReport = healthChecker.check(owner, name);
+        AiReadinessReport aiReport = aiChecker.check(owner, name);
+
+        System.out.println(formatter.format(healthReport, aiReport, format));
         return 0;
     }
 
