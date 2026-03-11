@@ -7,9 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -120,6 +123,45 @@ public class GitHubApiClient {
 
         HttpResponse<String> response = sendRequest(url);
         return response.statusCode() == 200;
+    }
+
+    /**
+     * Returns directory entries for a repository path.
+     * Each entry mirrors GitHub's contents API fields (for example: name, path, type).
+     */
+    public List<Map<String, Object>> listDirectoryEntries(String owner, String repo, String path) throws IOException {
+        String url = String.format("%s/repos/%s/%s/contents/%s", BASE_URL, owner, repo, path);
+        logger.debug("Listing directory entries: {}", url);
+
+        HttpResponse<String> response = sendRequest(url);
+        if (response.statusCode() == 404) {
+            return List.of();
+        }
+        checkSuccessful(response, url);
+
+        List<Map<String, Object>> entries = objectMapper.readValue(response.body(), new TypeReference<>() {});
+        return entries != null ? entries : new ArrayList<>();
+    }
+
+    /**
+     * Returns the count of issues (excluding pull requests) matching the given state.
+     * @param state "open", "closed", or null for all issues
+     */
+    public int getIssueCount(String owner, String repo, String state) throws IOException {
+        String query = String.format("repo:%s/%s type:issue", owner, repo);
+        if (state != null) {
+            query += " state:" + state;
+        }
+        String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
+        String url = String.format("%s/search/issues?q=%s&per_page=1", BASE_URL, encodedQuery);
+        logger.debug("Searching issue count: {}", url);
+
+        HttpResponse<String> response = sendRequest(url);
+        checkSuccessful(response, url);
+
+        Map<String, Object> result = objectMapper.readValue(response.body(), new TypeReference<>() {});
+        Object totalCount = result.get("total_count");
+        return (totalCount instanceof Number n) ? n.intValue() : 0;
     }
 
     // ---- Internal helpers ----
