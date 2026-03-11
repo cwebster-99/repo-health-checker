@@ -6,6 +6,8 @@ import com.demo.healthchecker.client.GitHubApiClient;
 import com.demo.healthchecker.formatter.ReportFormatter;
 import com.demo.healthchecker.model.AiReadinessReport;
 import com.demo.healthchecker.model.RepoHealthReport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -20,6 +22,8 @@ import java.util.concurrent.Callable;
 )
 public class App implements Callable<Integer> {
 
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
+
     @Option(names = "--repo", required = true, description = "GitHub repository in owner/name format")
     private String repo;
 
@@ -31,7 +35,7 @@ public class App implements Callable<Integer> {
     private String format;
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         String[] parts = repo.split("/", 2);
         if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
             System.err.println("Error: --repo must be in owner/name format, e.g. octocat/Hello-World");
@@ -40,16 +44,26 @@ public class App implements Callable<Integer> {
         String owner = parts[0];
         String name = parts[1];
 
-        GitHubApiClient client = new GitHubApiClient(token);
-        HealthChecker healthChecker = new HealthChecker(client);
-        AiReadinessChecker aiChecker = new AiReadinessChecker(client);
-        ReportFormatter formatter = new ReportFormatter();
+        try {
+            GitHubApiClient client = new GitHubApiClient(token);
+            HealthChecker healthChecker = new HealthChecker(client);
+            AiReadinessChecker aiChecker = new AiReadinessChecker(client);
 
-        RepoHealthReport healthReport = healthChecker.check(owner, name);
-        AiReadinessReport aiReport = aiChecker.check(owner, name);
+            RepoHealthReport healthReport = healthChecker.check(owner, name);
+            AiReadinessReport aiReport = aiChecker.check(owner, name);
 
-        System.out.println(formatter.format(healthReport, aiReport, format));
-        return 0;
+            ReportFormatter formatter = new ReportFormatter();
+            String output = "json".equalsIgnoreCase(format)
+                    ? formatter.format(healthReport, aiReport, "json")
+                    : formatter.format(healthReport, aiReport, "text");
+
+            System.out.println(output);
+            return 0;
+        } catch (Exception e) {
+            logger.error("Failed to check repository {}/{}: {}", owner, name, e.getMessage(), e);
+            System.err.println("Error: Unable to check repository " + owner + "/" + name + " — " + e.getMessage());
+            return 1;
+        }
     }
 
     public static void main(String[] args) {
@@ -57,4 +71,3 @@ public class App implements Callable<Integer> {
         System.exit(exitCode);
     }
 }
-
