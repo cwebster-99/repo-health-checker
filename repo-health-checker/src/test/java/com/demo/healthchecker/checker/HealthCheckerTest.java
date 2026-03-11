@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("removal")
 class HealthCheckerTest {
 
     private static final String OWNER = "test-owner";
@@ -41,7 +42,7 @@ class HealthCheckerTest {
     // 1. Perfect repo — all checks pass, score should be 100
     // -----------------------------------------------------------------------
     @Test
-    void check_perfectRepo_allChecksPassed_scoreIs100() throws IOException {
+     void check_perfectRepo_allChecksPassed_scoreIs105() throws IOException {
         // Files
         when(client.checkFileExists(OWNER, REPO, "README.md")).thenReturn(true);
         when(client.checkFileExists(OWNER, REPO, "LICENSE")).thenReturn(true);
@@ -60,6 +61,9 @@ class HealthCheckerTest {
         // Security policy
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(true);
 
+        // Stars
+        when(client.getStarCount(OWNER, REPO)).thenReturn(42);
+
         // Issues: excellent ratio (< 25 %)
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(2);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(100);
@@ -70,7 +74,7 @@ class HealthCheckerTest {
 
         RepoHealthReport report = healthChecker.check(OWNER, REPO);
 
-        assertThat(report.healthScore()).isEqualTo(100);
+        assertThat(report.healthScore()).isEqualTo(105);
         assertThat(report.hasReadme()).isTrue();
         assertThat(report.hasLicense()).isTrue();
         assertThat(report.licenseType()).isEqualTo("MIT");
@@ -80,6 +84,8 @@ class HealthCheckerTest {
         assertThat(report.hasTopics()).isTrue();
         assertThat(report.hasCodeowners()).isTrue();
         assertThat(report.hasSecurityPolicy()).isTrue();
+        assertThat(report.hasStars()).isTrue();
+        assertThat(report.starCount()).isEqualTo(42);
         assertThat(report.openIssues()).isEqualTo(2);
         assertThat(report.totalIssues()).isEqualTo(100);
         assertThat(report.lastCommitDaysAgo()).isLessThanOrEqualTo(2);
@@ -112,10 +118,9 @@ class HealthCheckerTest {
         assertThat(report.hasTopics()).isFalse();
         assertThat(report.hasCodeowners()).isFalse();
         assertThat(report.hasSecurityPolicy()).isFalse();
+        assertThat(report.hasStars()).isFalse();
+        assertThat(report.starCount()).isZero();
     }
-
-    // -----------------------------------------------------------------------
-    // 3. Minimal repo — only README exists
     // -----------------------------------------------------------------------
     @Test
     void check_minimalRepo_onlyReadmeExists() throws IOException {
@@ -213,7 +218,40 @@ class HealthCheckerTest {
     }
 
     // -----------------------------------------------------------------------
-    // 6. Parameterized test — open-issue ratio scoring
+    // 6. Star scoring — stars > 0 earns 5 points
+    // -----------------------------------------------------------------------
+    @Test
+    void check_repoWithStars_earns5Points() throws IOException {
+        stubMinimalRepo();
+        when(client.getStarCount(OWNER, REPO)).thenReturn(150);
+        when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
+        when(client.getIssueCount(OWNER, REPO, null)).thenReturn(0);
+
+        RepoHealthReport report = healthChecker.check(OWNER, REPO);
+
+        // stars(5) + issues excellent(15) = 20
+        assertThat(report.healthScore()).isEqualTo(20);
+        assertThat(report.hasStars()).isTrue();
+        assertThat(report.starCount()).isEqualTo(150);
+    }
+
+    @Test
+    void check_repoWithZeroStars_earnsNoStarPoints() throws IOException {
+        stubMinimalRepo();
+        when(client.getStarCount(OWNER, REPO)).thenReturn(0);
+        when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
+        when(client.getIssueCount(OWNER, REPO, null)).thenReturn(0);
+
+        RepoHealthReport report = healthChecker.check(OWNER, REPO);
+
+        // stars(0) + issues excellent(15) = 15
+        assertThat(report.healthScore()).isEqualTo(15);
+        assertThat(report.hasStars()).isFalse();
+        assertThat(report.starCount()).isZero();
+    }
+
+    // -----------------------------------------------------------------------
+    // 7. Parameterized test — open-issue ratio scoring
     //    Base score is 0 (all boolean checks false, commit OLD) so the total
     //    score equals exactly the issue-ratio score.
     // -----------------------------------------------------------------------
@@ -243,7 +281,7 @@ class HealthCheckerTest {
     }
 
     // -----------------------------------------------------------------------
-    // 7. Zero total issues — edge case for ratio calculation (no division by zero)
+    // 8. Zero total issues — edge case for ratio calculation (no division by zero)
     // -----------------------------------------------------------------------
     @Test
     void check_zeroTotalIssues_getsExcellentIssueScore() throws IOException {

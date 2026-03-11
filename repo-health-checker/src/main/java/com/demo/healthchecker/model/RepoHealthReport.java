@@ -13,5 +13,7 @@ public record RepoHealthReport(
         int openIssues,
         int totalIssues,
         long lastCommitDaysAgo,
+        boolean hasStars,
+        int starCount,
         int healthScore
 ) {}

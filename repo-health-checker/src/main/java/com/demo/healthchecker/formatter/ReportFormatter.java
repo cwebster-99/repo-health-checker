@@ -36,6 +36,8 @@ public class ReportFormatter {
         sb.append(String.format("  Topics:          %s%n", bool(h.hasTopics())));
         sb.append(String.format("  CODEOWNERS:      %s%n", bool(h.hasCodeowners())));
         sb.append(String.format("  Security policy: %s%n", bool(h.hasSecurityPolicy())));
+        sb.append(String.format("  Stars:           %s%n",
+                h.hasStars() ? "✓ " + h.starCount() + " stars" : "✗ No stars"));
         sb.append(String.format("  Open issues:     %d / %d%n", h.openIssues(), h.totalIssues()));
         sb.append(String.format("  Last commit:     %d days ago%n", h.lastCommitDaysAgo()));
         sb.append(String.format("  Health score:    %d / 100%n", h.healthScore()));
@@ -65,6 +67,8 @@ public class ReportFormatter {
         healthNode.put("hasTopics", h.hasTopics());
         healthNode.put("hasCodeowners", h.hasCodeowners());
         healthNode.put("hasSecurityPolicy", h.hasSecurityPolicy());
+        healthNode.put("hasStars", h.hasStars());
+        healthNode.put("starCount", h.starCount());
         healthNode.put("openIssues", h.openIssues());
         healthNode.put("totalIssues", h.totalIssues());
         healthNode.put("lastCommitDaysAgo", h.lastCommitDaysAgo());
