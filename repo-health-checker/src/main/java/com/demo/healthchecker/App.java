@@ -14,6 +14,10 @@ import picocli.CommandLine.Option;
 
 import java.util.concurrent.Callable;
 
+/**
+ * CLI entry point for the repo-health-checker application.
+ * Analyses a GitHub repository and produces a health report.
+ */
 @Command(
         name = "repo-health-checker",
         mixinStandardHelpOptions = true,
@@ -23,6 +27,8 @@ import java.util.concurrent.Callable;
 public class App implements Callable<Integer> {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
+
+    private static final int EXPECTED_REPO_PARTS = 2;
 
     @Option(names = "--repo", required = true, description = "GitHub repository in owner/name format")
     private String repo;
@@ -34,11 +40,16 @@ public class App implements Callable<Integer> {
     @Option(names = "--format", description = "Output format: text, json", defaultValue = "text")
     private String format;
 
+    /**
+     * Executes the health-check workflow for the specified repository.
+     *
+     * @return 0 on success, 1 on failure
+     */
     @Override
     public Integer call() {
-        String[] parts = repo.split("/", 2);
-        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
-            System.err.println("Error: --repo must be in owner/name format, e.g. octocat/Hello-World");
+        String[] parts = repo.split("/", EXPECTED_REPO_PARTS);
+        if (parts.length != EXPECTED_REPO_PARTS || parts[0].isBlank() || parts[1].isBlank()) {
+            logger.error("Invalid --repo value '{}': must be in owner/name format, e.g. octocat/Hello-World", repo);
             return 1;
         }
         String owner = parts[0];
@@ -57,15 +68,19 @@ public class App implements Callable<Integer> {
                     ? formatter.format(healthReport, aiReport, "json")
                     : formatter.format(healthReport, aiReport, "text");
 
-            System.out.println(output);
+            logger.info(output);
             return 0;
         } catch (Exception e) {
             logger.error("Failed to check repository {}/{}: {}", owner, name, e.getMessage(), e);
-            System.err.println("Error: Unable to check repository " + owner + "/" + name + " — " + e.getMessage());
             return 1;
         }
     }
 
+    /**
+     * Application entry point.
+     *
+     * @param args command-line arguments
+     */
     public static void main(String[] args) {
         int exitCode = new CommandLine(new App()).execute(args);
         System.exit(exitCode);
