@@ -12,6 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Evaluates the overall health of a GitHub repository.
+ *
+ * <p>Checks for the presence of common project artifacts (README, LICENSE,
+ * CI configuration, CODEOWNERS, security policy, etc.), analyses issue
+ * activity and commit recency, then produces a weighted score out of 100.
+ */
 public class HealthChecker {
 
     private static final Logger logger = LoggerFactory.getLogger(HealthChecker.class);
@@ -40,10 +47,23 @@ public class HealthChecker {
 
     private final GitHubApiClient client;
 
+    /**
+     * Creates a new health checker backed by the given API client.
+     *
+     * @param client the GitHub API client used for all repository queries
+     */
     public HealthChecker(GitHubApiClient client) {
         this.client = client;
     }
 
+    /**
+     * Runs the full health check against the specified repository.
+     *
+     * @param owner repository owner (user or organization)
+     * @param repo  repository name
+     * @return a {@link RepoHealthReport} summarizing the results
+     * @throws IOException if any GitHub API call fails
+     */
     public RepoHealthReport check(String owner, String repo) throws IOException {
         logger.info("Starting health check for {}/{}", owner, repo);
         int score = 0;

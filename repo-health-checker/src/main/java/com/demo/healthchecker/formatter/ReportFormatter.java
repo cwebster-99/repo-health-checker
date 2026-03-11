@@ -7,13 +7,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 
+/**
+ * Formats {@link RepoHealthReport} and {@link AiReadinessReport} into
+ * human-readable text or JSON output.
+ */
 public class ReportFormatter {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Formats the given reports according to the requested format.
-     * @param format "json" for JSON output, any other value produces text output
+     *
+     * @param health the repository health report
+     * @param ai     the AI-readiness report
+     * @param format {@code "json"} for JSON output; any other value produces plain text
+     * @return the formatted report string
      * @throws IOException if JSON serialization fails
      */
     public String format(RepoHealthReport health, AiReadinessReport ai, String format) throws IOException {
