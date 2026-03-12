@@ -19,6 +19,13 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Lightweight client for the GitHub REST API (v3).
+ *
+ * <p>Provides methods to query repository metadata, file existence, issue
+ * counts, commit history, and license information. All network calls use
+ * the Java {@link HttpClient} and responses are parsed with Jackson.
+ */
 public class GitHubApiClient {
 
     private static final Logger logger = LoggerFactory.getLogger(GitHubApiClient.class);
@@ -30,6 +37,11 @@ public class GitHubApiClient {
     private final ObjectMapper objectMapper;
     private final String token;
 
+    /**
+     * Creates a new client, optionally authenticated with a personal-access token.
+     *
+     * @param token GitHub API token, or {@code null} for unauthenticated requests
+     */
     public GitHubApiClient(String token) {
         this.token = token;
         this.httpClient = HttpClient.newHttpClient();
@@ -50,6 +62,12 @@ public class GitHubApiClient {
 
     /**
      * Checks whether a file (or directory) exists at the given path in the repository.
+     *
+     * @param owner repository owner (user or organization)
+     * @param repo  repository name
+     * @param path  path inside the repository (e.g. {@code "README.md"})
+     * @return {@code true} if the path exists, {@code false} otherwise
+     * @throws IOException if the API call fails
      */
     public boolean checkFileExists(String owner, String repo, String path) throws IOException {
         String url = String.format("%s/repos/%s/%s/contents/%s", BASE_URL, owner, repo, path);
@@ -61,6 +79,11 @@ public class GitHubApiClient {
 
     /**
      * Returns general repository information as a Map.
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @return a map of repository metadata fields
+     * @throws IOException if the API call fails
      */
     public Map<String, Object> getRepoInfo(String owner, String repo) throws IOException {
         String url = String.format("%s/repos/%s/%s", BASE_URL, owner, repo);
@@ -74,6 +97,11 @@ public class GitHubApiClient {
 
     /**
      * Returns the number of open issues for the repository.
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @return the open-issue count
+     * @throws IOException if the API call fails
      */
     public int getOpenIssueCount(String owner, String repo) throws IOException {
         Map<String, Object> repoInfo = getRepoInfo(owner, repo);
@@ -86,6 +114,11 @@ public class GitHubApiClient {
 
     /**
      * Returns the date of the last commit, or empty if there are no commits.
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @return an {@link Optional} containing the ISO-8601 date string, or empty
+     * @throws IOException if the API call fails
      */
     @SuppressWarnings("unchecked")
     public Optional<String> getLastCommitDate(String owner, String repo) throws IOException {
@@ -117,6 +150,11 @@ public class GitHubApiClient {
 
     /**
      * Returns the SPDX license identifier for the repository, or empty if none.
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @return an {@link Optional} containing the SPDX identifier (e.g. {@code "MIT"}), or empty
+     * @throws IOException if the API call fails
      */
     public Optional<String> getLicenseType(String owner, String repo) throws IOException {
         Map<String, Object> repoInfo = getRepoInfo(owner, repo);
@@ -132,6 +170,12 @@ public class GitHubApiClient {
 
     /**
      * Checks whether a directory exists at the given path in the repository.
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @param path  directory path inside the repository
+     * @return {@code true} if the directory exists, {@code false} otherwise
+     * @throws IOException if the API call fails
      */
     public boolean hasDirectory(String owner, String repo, String path) throws IOException {
         String url = String.format("%s/repos/%s/%s/contents/%s", BASE_URL, owner, repo, path);
@@ -144,6 +188,12 @@ public class GitHubApiClient {
     /**
      * Returns directory entries for a repository path.
      * Each entry mirrors GitHub's contents API fields (for example: name, path, type).
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @param path  directory path to list
+     * @return a list of entry maps, or an empty list if the path does not exist
+     * @throws IOException if the API call fails for reasons other than a 404
      */
     public List<Map<String, Object>> listDirectoryEntries(String owner, String repo, String path) throws IOException {
         String url = String.format("%s/repos/%s/%s/contents/%s", BASE_URL, owner, repo, path);
@@ -161,7 +211,12 @@ public class GitHubApiClient {
 
     /**
      * Returns the count of issues (excluding pull requests) matching the given state.
-     * @param state "open", "closed", or null for all issues
+     *
+     * @param owner repository owner
+     * @param repo  repository name
+     * @param state {@code "open"}, {@code "closed"}, or {@code null} for all issues
+     * @return the matching issue count
+     * @throws IOException if the API call fails
      */
     public int getIssueCount(String owner, String repo, String state) throws IOException {
         String query = String.format("repo:%s/%s type:issue", owner, repo);

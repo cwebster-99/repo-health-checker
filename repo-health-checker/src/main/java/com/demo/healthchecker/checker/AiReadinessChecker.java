@@ -9,6 +9,19 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Evaluates how well a GitHub repository is prepared for AI-assisted development.
+ *
+ * <p>The checker inspects six indicators and produces a score from 0 to 6:
+ * <ol>
+ *   <li>Copilot instructions ({@code .github/copilot-instructions.md})</li>
+ *   <li>Custom agents ({@code .github/copilot/agents.md})</li>
+ *   <li>Custom skills ({@code .github/copilot/skills/} directory)</li>
+ *   <li>Prompt files ({@code *.prompt.md} under {@code .github/})</li>
+ *   <li>{@code .gitignore} file</li>
+ *   <li>Folder-level instructions ({@code *.instructions.md} under {@code src/})</li>
+ * </ol>
+ */
 public class AiReadinessChecker {
 
     private static final Logger logger = LoggerFactory.getLogger(AiReadinessChecker.class);
@@ -16,10 +29,23 @@ public class AiReadinessChecker {
 
     private final GitHubApiClient client;
 
+    /**
+     * Creates a new AI-readiness checker backed by the given API client.
+     *
+     * @param client the GitHub API client used for all repository queries
+     */
     public AiReadinessChecker(GitHubApiClient client) {
         this.client = client;
     }
 
+    /**
+     * Runs the AI-readiness check against the specified repository.
+     *
+     * @param owner repository owner (user or organization)
+     * @param repo  repository name
+     * @return an {@link AiReadinessReport} summarizing the results
+     * @throws IOException if any GitHub API call fails
+     */
     public AiReadinessReport check(String owner, String repo) throws IOException {
         logger.info("Starting AI readiness check for {}/{}", owner, repo);
 
