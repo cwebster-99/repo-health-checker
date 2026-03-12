@@ -9,11 +9,19 @@ import java.io.IOException;
 
 public class ReportFormatter {
 
+    private static final int RATING_EXCELLENT_THRESHOLD = 80;
+    private static final int RATING_GOOD_THRESHOLD = 60;
+    private static final int RATING_FAIR_THRESHOLD = 40;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Formats the given reports according to the requested format.
+     *
+     * @param health the repository health report
+     * @param ai     the AI readiness report
      * @param format "json" for JSON output, any other value produces text output
+     * @return the formatted report string
      * @throws IOException if JSON serialization fails
      */
     public String format(RepoHealthReport health, AiReadinessReport ai, String format) throws IOException {
@@ -21,6 +29,25 @@ public class ReportFormatter {
             case "json" -> formatJson(health, ai);
             default -> formatText(health, ai);
         };
+    }
+
+    /**
+     * Returns a human-readable rating label for the given health score.
+     *
+     * @param score the numeric health score
+     * @return one of "Excellent", "Good", "Fair", or "Needs Work"
+     */
+    public static String rating(int score) {
+        if (score >= RATING_EXCELLENT_THRESHOLD) {
+            return "Excellent";
+        }
+        if (score >= RATING_GOOD_THRESHOLD) {
+            return "Good";
+        }
+        if (score >= RATING_FAIR_THRESHOLD) {
+            return "Fair";
+        }
+        return "Needs Work";
     }
 
     private String formatText(RepoHealthReport h, AiReadinessReport ai) {
@@ -41,6 +68,7 @@ public class ReportFormatter {
         sb.append(String.format("  Open issues:     %d / %d%n", h.openIssues(), h.totalIssues()));
         sb.append(String.format("  Last commit:     %d days ago%n", h.lastCommitDaysAgo()));
         sb.append(String.format("  Health score:    %d / 100%n", h.healthScore()));
+        sb.append(String.format("  Rating:          %s%n", rating(h.healthScore())));
 
         sb.append("\n=== AI Readiness Report ===\n");
         sb.append(String.format("  Copilot instructions:   %s%n", bool(ai.hasCopilotInstructions())));
@@ -73,6 +101,7 @@ public class ReportFormatter {
         healthNode.put("totalIssues", h.totalIssues());
         healthNode.put("lastCommitDaysAgo", h.lastCommitDaysAgo());
         healthNode.put("healthScore", h.healthScore());
+        healthNode.put("rating", rating(h.healthScore()));
 
         ObjectNode aiNode = root.putObject("aiReadiness");
         aiNode.put("hasCopilotInstructions", ai.hasCopilotInstructions());
