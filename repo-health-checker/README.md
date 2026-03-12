@@ -1,5 +1,7 @@
 # GitHub Repository Health Checker
 
+[![CI](https://github.com/Sweekriti91/repo-health-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/Sweekriti91/repo-health-checker/actions/workflows/ci.yml)
+
 A CLI tool that analyzes GitHub repositories and generates a health score report with AI readiness assessment for GitHub Copilot.
 
 ## Requirements

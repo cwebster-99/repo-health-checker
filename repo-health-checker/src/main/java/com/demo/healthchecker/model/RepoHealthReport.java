@@ -15,6 +15,8 @@ package com.demo.healthchecker.model;
  * @param openIssues        number of open issues (excluding pull requests)
  * @param totalIssues       total number of issues (excluding pull requests)
  * @param lastCommitDaysAgo number of days since the most recent commit
+ * @param hasStars          whether the repository has at least one star
+ * @param starCount         number of stargazers on the repository
  * @param healthScore       overall weighted health score (0–100)
  */
 public record RepoHealthReport(
@@ -30,5 +32,7 @@ public record RepoHealthReport(
         int openIssues,
         int totalIssues,
         long lastCommitDaysAgo,
+        boolean hasStars,
+        int starCount,
         int healthScore
 ) {}

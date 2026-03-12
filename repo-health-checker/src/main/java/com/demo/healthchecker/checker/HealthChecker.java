@@ -32,6 +32,7 @@ public class HealthChecker {
     private static final int WEIGHT_TOPICS = 5;
     private static final int WEIGHT_CODEOWNERS = 5;
     private static final int WEIGHT_SECURITY = 5;
+    private static final int WEIGHT_STARS = 5;
 
     // Issue ratio scoring
     private static final int WEIGHT_ISSUES_EXCELLENT = 15;
@@ -64,6 +65,7 @@ public class HealthChecker {
      * @return a {@link RepoHealthReport} summarizing the results
      * @throws IOException if any GitHub API call fails
      */
+    @SuppressWarnings("removal")
     public RepoHealthReport check(String owner, String repo) throws IOException {
         logger.info("Starting health check for {}/{}", owner, repo);
         int score = 0;
@@ -95,6 +97,10 @@ public class HealthChecker {
         boolean hasSecurityPolicy = checkSecurityPolicy(owner, repo);
         if (hasSecurityPolicy) score += WEIGHT_SECURITY;
 
+        int starCount = client.getStarCount(owner, repo);
+        boolean hasStars = starCount > 0;
+        score += scoreStars(starCount);
+
         int openIssues = client.getIssueCount(owner, repo, "open");
         int totalIssues = client.getIssueCount(owner, repo, null);
         score += scoreIssues(openIssues, totalIssues);
@@ -118,6 +124,8 @@ public class HealthChecker {
                 openIssues,
                 totalIssues,
                 lastCommitDaysAgo,
+                hasStars,
+                starCount,
                 score
         );
     }
@@ -179,6 +187,11 @@ public class HealthChecker {
                 || client.checkFileExists(owner, repo, ".github/SECURITY.md");
         logger.info("Security policy exists: {}", exists);
         return exists;
+    }
+
+    private int scoreStars(int starCount) {
+        logger.info("Star count: {}", starCount);
+        return starCount > 0 ? WEIGHT_STARS : 0;
     }
 
     private int scoreIssues(int openIssues, int totalIssues) {

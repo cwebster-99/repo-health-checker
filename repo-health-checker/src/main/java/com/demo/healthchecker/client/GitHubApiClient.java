@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Lightweight client for the GitHub REST API (v3).
@@ -28,6 +30,8 @@ public class GitHubApiClient {
 
     private static final Logger logger = LoggerFactory.getLogger(GitHubApiClient.class);
     private static final String BASE_URL = "https://api.github.com";
+    private static final Pattern LINK_LAST_PAGE_PATTERN = Pattern.compile(
+            "<[^>]*[?&]page=(\\d+)[^>]*>;\\s*rel=\"last\"");
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -41,6 +45,18 @@ public class GitHubApiClient {
     public GitHubApiClient(String token) {
         this.token = token;
         this.httpClient = HttpClient.newHttpClient();
+        this.objectMapper = new ObjectMapper();
+    }
+
+    /**
+     * Package-private constructor for testing with a custom {@link HttpClient}.
+     *
+     * @param token      GitHub API token
+     * @param httpClient the HTTP client to use
+     */
+    GitHubApiClient(String token, HttpClient httpClient) {
+        this.token = token;
+        this.httpClient = httpClient;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -217,6 +233,59 @@ public class GitHubApiClient {
         Map<String, Object> result = objectMapper.readValue(response.body(), new TypeReference<>() {});
         Object totalCount = result.get("total_count");
         return (totalCount instanceof Number n) ? n.intValue() : 0;
+    }
+
+    // ---- Deprecated methods ----
+
+    /**
+     * Returns the star count for the given repository.
+     *
+     * @param owner the repository owner
+     * @param repo  the repository name
+     * @return the number of stargazers
+     * @throws IOException if the API call fails
+     * @deprecated Use {@link #getRepoInfo(String, String)} instead and extract
+     *             {@code stargazers_count} from the returned map.
+     */
+    @Deprecated(since = "1.1", forRemoval = true)
+    public int getStarCount(String owner, String repo) throws IOException {
+        Map<String, Object> repoInfo = getRepoInfo(owner, repo);
+        Object count = repoInfo.get("stargazers_count");
+        if (count instanceof Number number) {
+            return number.intValue();
+        }
+        return 0;
+    }
+
+    /**
+     * Returns the total number of contributors (including anonymous) for the repository.
+     * Reads the {@code Link} header to determine the total page count.
+     *
+     * @param owner the repository owner
+     * @param repo  the repository name
+     * @return the contributor count
+     * @throws IOException if the API call fails
+     */
+    public int getContributorCount(String owner, String repo) throws IOException {
+        String url = String.format("%s/repos/%s/%s/contributors?per_page=1&anon=true",
+                BASE_URL, owner, repo);
+        logger.debug("Fetching contributor count: {}", url);
+
+        HttpResponse<String> response = sendRequest(url);
+        checkSuccessful(response, url);
+
+        Optional<String> linkHeader = response.headers().firstValue("Link");
+        if (linkHeader.isPresent()) {
+            Matcher matcher = LINK_LAST_PAGE_PATTERN.matcher(linkHeader.get());
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            }
+        }
+
+        // No Link header means a single page — count items directly
+        List<Map<String, Object>> contributors = objectMapper.readValue(
+                response.body(), new TypeReference<>() {});
+        return contributors != null ? contributors.size() : 0;
     }
 
     // ---- Internal helpers ----
