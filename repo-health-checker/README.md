@@ -18,10 +18,19 @@ mvn clean package
 ## Usage
 
 ```bash
+# Using a personal access token
 java -jar target/healthchecker-1.0-SNAPSHOT.jar \
   --repo owner/repo-name \
-  --token ghp_yourGitHubToken \
-  --format text
+  --token ghp_yourGitHubToken
+
+# Using the GITHUB_TOKEN environment variable
+export GITHUB_TOKEN=ghp_yourGitHubToken
+java -jar target/healthchecker-1.0-SNAPSHOT.jar --repo owner/repo-name
+
+# JSON output
+java -jar target/healthchecker-1.0-SNAPSHOT.jar \
+  --repo owner/repo-name \
+  --format json
 ```
 
 | Flag       | Required | Description                                              |
@@ -42,9 +51,11 @@ java -jar target/healthchecker-1.0-SNAPSHOT.jar \
   Topics:          yes
   CODEOWNERS:      no
   Security policy: no
+  Stars:           ✓ 128 stars
   Open issues:     3 / 12
   Last commit:     2 days ago
-  Health score:    82 / 100
+  Health score:    87 / 100
+  Rating:          Excellent
 
 === AI Readiness Report ===
   Copilot instructions:   yes
@@ -62,15 +73,15 @@ This project was built entirely with GitHub Copilot across multiple interaction 
 
 | Feature Used | Where | What It Did |
 |---|---|---|
-| 🏗️ Agent Mode | Project setup, API client, wiring | Created pom.xml, directory structure, full classes from natural language prompts |
-| ⌨️ Inline Completions | Domain models | Tab-completed 2 Java records with 21 fields total |
-| 🔌 MCP (GitHub) | API client design | Queried live repos to understand API structure before generating client code |
-| 💬 Chat | Scoring logic, AI readiness checker | Generated business logic from requirements descriptions |
-| 🧪 /tests + Generate Tests | Test suite | Generated JUnit 5 tests with Mockito mocks and parameterized cases |
-| 🔧 /fix | Bug fix | Found divide-by-zero from stack trace, suggested exact fix |
-| 📝 /doc | Javadoc (via coding agent) | Generated documentation for all public APIs |
-| 📋 Custom Instructions | Enforced team conventions | SLF4J logging, Optional returns, Java records |
-| 🤖 Coding Agent (IntelliJ) | Report Formatter | Created class + tests from a prompt inside the IDE |
-| 🤖 Coding Agent (Issue) | Javadoc | Assigned a GitHub issue, received working PR |
-| ✍️ Commit Messages | All commits | Auto-generated Conventional Commit format messages |
-
+| 🏗️ Agent Mode | Project setup, API client, wiring | Created pom.xml, directory structure, custom instructions, CI/CD — all from natural language |
+| ⌨️ Inline Completions | Domain models | Tab-completed Java records with 21+ fields |
+| 🔌 MCP (GitHub) | API client design | Queried live repos via MCP to inform client design |
+| 💬 Chat | Scoring logic, AI readiness checker | Generated business logic from requirements |
+| 🧪 Test Generation | Test suite | Generated JUnit 5 tests with Mockito, parameterized tests, edge cases |
+| 📈 Coverage Improvement | Test suite | Iteratively increased coverage from ~65% to 90%+ with targeted prompts |
+| 🗑️ Deprecation Cleanup | API client refactor | Removed deprecated method + all references, imports, and tests in one pass |
+| 🔧 /fix | Bug fix | Found off-by-one boundary bug from failing test |
+| 📋 Custom Instructions | All generated code | Enforced SLF4J logging, Optional returns, records, AssertJ — from first commit |
+| ⚙️ CI/CD | GitHub Actions | Generated workflow with JaCoCo coverage gate |
+| 🤖 Coding Agent (IntelliJ) | Report Formatter | Created full class + tests via agent from inside the IDE |
+| 🤖 Coding Agent (Issue) | Javadoc | Assigned GitHub issue, received working PR |
