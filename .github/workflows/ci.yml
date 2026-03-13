@@ -24,4 +24,3 @@ jobs:
 
       - name: Build and verify
         run: mvn verify
-        working-directory: repo-health-checker

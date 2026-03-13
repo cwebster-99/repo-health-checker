@@ -14,14 +14,16 @@ import picocli.CommandLine.Option;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
 /**
  * CLI entry point for the repository health checker.
  *
  * <p>Parses command-line arguments via picocli, runs both a general health
- * check and an AI-readiness check against a GitHub repository, and prints
- * the combined report to standard output.
+ * check and an AI-readiness check against a GitHub repository, and writes
+ * the combined report to a Markdown file.
  */
 @Command(
         name = "repo-health-checker",
@@ -44,12 +46,8 @@ public class App implements Callable<Integer> {
             defaultValue = "${GITHUB_TOKEN}")
     private String token;
 
-    /** Output format — either {@code text} (default) or {@code json}. */
-    @Option(names = "--format", description = "Output format: text, json", defaultValue = "text")
-    private String format;
-
     /**
-     * Executes the health check and prints the report.
+     * Executes the health check and writes the Markdown report to a file.
      *
      * @return {@code 0} on success, {@code 1} on invalid input or runtime error
      */
@@ -73,11 +71,12 @@ public class App implements Callable<Integer> {
             AiReadinessReport aiReport = aiChecker.check(owner, name);
 
             ReportFormatter formatter = new ReportFormatter();
-            String output = "json".equalsIgnoreCase(format)
-                    ? formatter.format(healthReport, aiReport, "json")
-                    : formatter.format(healthReport, aiReport, "text");
+            String output = formatter.format(healthReport, aiReport);
 
-            logger.info(output);
+            String fileName = owner + "-" + name + "-health-report.md";
+            Path outputPath = Path.of(fileName);
+            Files.writeString(outputPath, output);
+            logger.info("Report written to {}", outputPath.toAbsolutePath());
             return 0;
         } catch (Exception e) {
             logger.error("Failed to check repository {}/{}: {}", owner, name, e.getMessage(), e);
