@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("removal")
 class HealthCheckerTest {
 
     private static final String OWNER = "test-owner";
@@ -45,18 +44,17 @@ class HealthCheckerTest {
     void check_perfectRepo_allChecksPassed_maxScore() throws IOException {
         when(client.checkFileExists(OWNER, REPO, "README.md")).thenReturn(true);
         when(client.checkFileExists(OWNER, REPO, "LICENSE")).thenReturn(true);
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.of("MIT"));
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(true);
 
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of(
                 "description", "A well-maintained repository",
-                "topics", List.of("java", "testing")
+                "topics", List.of("java", "testing"),
+                "license", Map.of("spdx_id", "MIT"),
+                "stargazers_count", 42
         ));
 
         when(client.checkFileExists(OWNER, REPO, ".github/CODEOWNERS")).thenReturn(true);
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(true);
-
-        when(client.getStarCount(OWNER, REPO)).thenReturn(42);
 
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(2);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(100);
@@ -91,7 +89,6 @@ class HealthCheckerTest {
     @Test
     void check_emptyRepo_nothingExists_scoreIsMinimal() throws IOException {
         when(client.checkFileExists(anyString(), anyString(), anyString())).thenReturn(false);
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(false);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of());
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
@@ -127,7 +124,6 @@ class HealthCheckerTest {
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".github/SECURITY.md")).thenReturn(false);
 
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(false);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of());
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
@@ -157,7 +153,6 @@ class HealthCheckerTest {
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".github/SECURITY.md")).thenReturn(false);
 
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(true);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of(
                 "description", "Has CI but no license"
@@ -191,11 +186,11 @@ class HealthCheckerTest {
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".github/SECURITY.md")).thenReturn(false);
 
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.of("Apache-2.0"));
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(true);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of(
                 "description", "A project with old commits",
-                "topics", List.of("java")
+                "topics", List.of("java"),
+                "license", Map.of("spdx_id", "Apache-2.0")
         ));
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(1);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(10);
@@ -217,7 +212,7 @@ class HealthCheckerTest {
     @Test
     void check_repoWithStars_earns5Points() throws IOException {
         stubMinimalRepo();
-        when(client.getStarCount(OWNER, REPO)).thenReturn(150);
+        when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of("stargazers_count", 150));
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(0);
 
@@ -232,7 +227,7 @@ class HealthCheckerTest {
     @Test
     void check_repoWithZeroStars_earnsNoStarPoints() throws IOException {
         stubMinimalRepo();
-        when(client.getStarCount(OWNER, REPO)).thenReturn(0);
+        when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of("stargazers_count", 0));
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(0);
 
@@ -292,7 +287,7 @@ class HealthCheckerTest {
     }
 
     // -----------------------------------------------------------------------
-    // 9. Edge case: null license type (getLicenseType returns empty Optional)
+    // 9. Edge case: null license type (no license in repoInfo)
     // -----------------------------------------------------------------------
     @Test
     void check_nullLicenseType_noLicenseTypePoints() throws IOException {
@@ -304,7 +299,6 @@ class HealthCheckerTest {
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".github/SECURITY.md")).thenReturn(false);
 
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(false);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of());
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
@@ -334,10 +328,10 @@ class HealthCheckerTest {
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".github/SECURITY.md")).thenReturn(false);
 
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.of("MIT"));
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(true);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of(
-                "description", "Boundary test repo"
+                "description", "Boundary test repo",
+                "license", Map.of("spdx_id", "MIT")
         ));
 
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(1);
@@ -435,7 +429,6 @@ class HealthCheckerTest {
     // -----------------------------------------------------------------------
     private void stubMinimalRepo() throws IOException {
         when(client.checkFileExists(anyString(), anyString(), anyString())).thenReturn(false);
-        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(false);
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of());
         when(client.getLastCommitDate(OWNER, REPO)).thenReturn(Optional.empty());
