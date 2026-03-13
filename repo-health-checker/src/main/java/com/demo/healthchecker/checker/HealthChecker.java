@@ -65,7 +65,6 @@ public class HealthChecker {
      * @return a {@link RepoHealthReport} summarizing the results
      * @throws IOException if any GitHub API call fails
      */
-    @SuppressWarnings("removal")
     public RepoHealthReport check(String owner, String repo) throws IOException {
         logger.info("Starting health check for {}/{}", owner, repo);
         int score = 0;
@@ -76,14 +75,14 @@ public class HealthChecker {
         boolean hasLicense = checkLicense(owner, repo);
         if (hasLicense) score += WEIGHT_LICENSE;
 
-        String licenseType = checkLicenseType(owner, repo);
+        Map<String, Object> repoInfo = client.getRepoInfo(owner, repo);
+
+        String licenseType = checkLicenseType(repoInfo);
         if (licenseType != null) score += WEIGHT_LICENSE_TYPE;
 
         boolean hasCi = checkCi(owner, repo);
         String ciType = hasCi ? "GitHub Actions" : null;
         if (hasCi) score += WEIGHT_CI;
-
-        Map<String, Object> repoInfo = client.getRepoInfo(owner, repo);
 
         boolean hasDescription = checkDescription(repoInfo);
         if (hasDescription) score += WEIGHT_DESCRIPTION;
@@ -97,7 +96,7 @@ public class HealthChecker {
         boolean hasSecurityPolicy = checkSecurityPolicy(owner, repo);
         if (hasSecurityPolicy) score += WEIGHT_SECURITY;
 
-        int starCount = client.getStarCount(owner, repo);
+        int starCount = extractStarCount(repoInfo);
         boolean hasStars = starCount > 0;
         score += scoreStars(starCount);
 
@@ -144,11 +143,26 @@ public class HealthChecker {
         return exists;
     }
 
-    private String checkLicenseType(String owner, String repo) throws IOException {
+    private String checkLicenseType(Map<String, Object> repoInfo) {
         logger.info("Checking license type...");
-        String type = client.getLicenseType(owner, repo).orElse(null);
+        String type = null;
+        Object licenseObj = repoInfo.get("license");
+        if (licenseObj instanceof Map<?, ?> licenseMap) {
+            Object spdxId = licenseMap.get("spdx_id");
+            if (spdxId != null && !"NOASSERTION".equals(spdxId.toString())) {
+                type = spdxId.toString();
+            }
+        }
         logger.info("License type: {}", type);
         return type;
+    }
+
+    private int extractStarCount(Map<String, Object> repoInfo) {
+        Object count = repoInfo.get("stargazers_count");
+        if (count instanceof Number number) {
+            return number.intValue();
+        }
+        return 0;
     }
 
     private boolean checkCi(String owner, String repo) throws IOException {
