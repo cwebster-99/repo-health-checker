@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("removal")
 class HealthCheckerTest {
 
     private static final String OWNER = "test-owner";
@@ -50,13 +49,12 @@ class HealthCheckerTest {
 
         when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of(
                 "description", "A well-maintained repository",
-                "topics", List.of("java", "testing")
+                "topics", List.of("java", "testing"),
+                "stargazers_count", 42
         ));
 
         when(client.checkFileExists(OWNER, REPO, ".github/CODEOWNERS")).thenReturn(true);
         when(client.checkFileExists(OWNER, REPO, "SECURITY.md")).thenReturn(true);
-
-        when(client.getStarCount(OWNER, REPO)).thenReturn(42);
 
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(2);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(100);
@@ -216,8 +214,11 @@ class HealthCheckerTest {
     // -----------------------------------------------------------------------
     @Test
     void check_repoWithStars_earns5Points() throws IOException {
-        stubMinimalRepo();
-        when(client.getStarCount(OWNER, REPO)).thenReturn(150);
+        when(client.checkFileExists(anyString(), anyString(), anyString())).thenReturn(false);
+        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
+        when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(false);
+        when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of("stargazers_count", 150));
+        when(client.getLastCommitDate(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(0);
 
@@ -231,8 +232,11 @@ class HealthCheckerTest {
 
     @Test
     void check_repoWithZeroStars_earnsNoStarPoints() throws IOException {
-        stubMinimalRepo();
-        when(client.getStarCount(OWNER, REPO)).thenReturn(0);
+        when(client.checkFileExists(anyString(), anyString(), anyString())).thenReturn(false);
+        when(client.getLicenseType(OWNER, REPO)).thenReturn(Optional.empty());
+        when(client.hasDirectory(OWNER, REPO, ".github/workflows")).thenReturn(false);
+        when(client.getRepoInfo(OWNER, REPO)).thenReturn(Map.of("stargazers_count", 0));
+        when(client.getLastCommitDate(OWNER, REPO)).thenReturn(Optional.empty());
         when(client.getIssueCount(OWNER, REPO, "open")).thenReturn(0);
         when(client.getIssueCount(OWNER, REPO, null)).thenReturn(0);
 

@@ -65,7 +65,6 @@ public class HealthChecker {
      * @return a {@link RepoHealthReport} summarizing the results
      * @throws IOException if any GitHub API call fails
      */
-    @SuppressWarnings("removal")
     public RepoHealthReport check(String owner, String repo) throws IOException {
         logger.info("Starting health check for {}/{}", owner, repo);
         int score = 0;
@@ -97,7 +96,8 @@ public class HealthChecker {
         boolean hasSecurityPolicy = checkSecurityPolicy(owner, repo);
         if (hasSecurityPolicy) score += WEIGHT_SECURITY;
 
-        int starCount = client.getStarCount(owner, repo);
+        Object starCountObj = repoInfo.get("stargazers_count");
+        int starCount = (starCountObj instanceof Number n) ? n.intValue() : 0;
         boolean hasStars = starCount > 0;
         score += scoreStars(starCount);
 
