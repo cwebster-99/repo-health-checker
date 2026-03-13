@@ -12,6 +12,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.concurrent.Callable;
 
 /**
@@ -62,7 +64,8 @@ public class App implements Callable<Integer> {
         String name = parts[1];
 
         try {
-            GitHubApiClient client = new GitHubApiClient(token);
+            String resolvedToken = resolveToken();
+            GitHubApiClient client = new GitHubApiClient(resolvedToken);
             HealthChecker healthChecker = new HealthChecker(client);
             AiReadinessChecker aiChecker = new AiReadinessChecker(client);
 
@@ -80,6 +83,37 @@ public class App implements Callable<Integer> {
             logger.error("Failed to check repository {}/{}: {}", owner, name, e.getMessage(), e);
             return 1;
         }
+    }
+
+    /**
+     * Resolves the GitHub token by checking (in order):
+     * 1. The {@code --token} CLI option / {@code GITHUB_TOKEN} env var
+     * 2. The {@code gh auth token} command (GitHub CLI)
+     *
+     * @return the resolved token, or {@code null} if none found
+     */
+    private String resolveToken() {
+        if (token != null && !token.isBlank()) {
+            return token;
+        }
+        try {
+            Process process = new ProcessBuilder("gh", "auth", "token")
+                    .redirectErrorStream(true)
+                    .start();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line = reader.readLine();
+                int exit = process.waitFor();
+                if (exit == 0 && line != null && !line.isBlank()) {
+                    logger.debug("Using token from gh CLI");
+                    return line.trim();
+                }
+            }
+        } catch (Exception e) {
+            logger.debug("Could not retrieve token from gh CLI: {}", e.getMessage());
+        }
+        logger.warn("No GitHub token found. Requests will be unauthenticated (rate-limited to 60/hr).");
+        return null;
     }
 
     /**
