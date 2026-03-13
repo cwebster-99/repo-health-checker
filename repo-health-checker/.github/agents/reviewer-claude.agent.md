@@ -1,7 +1,7 @@
 ---
 description: "Code reviewer using Claude Sonnet. Use when reviewing Java code for correctness, style, and project conventions."
 tools: [read, search]
-model: "Claude Sonnet 4 (copilot)"
+model: "Claude Sonnet 4"
 user-invocable: false
 ---
 

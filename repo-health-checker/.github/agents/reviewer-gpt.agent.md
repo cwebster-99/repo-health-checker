@@ -1,7 +1,7 @@
 ---
 description: "Code reviewer using GPT-4o. Use when reviewing Java code for correctness, style, and project conventions."
 tools: [read, search]
-model: "GPT-4o (copilot)"
+model: "GPT-5.4"
 user-invocable: false
 ---
 
