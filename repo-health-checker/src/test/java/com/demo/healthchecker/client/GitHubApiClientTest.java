@@ -17,13 +17,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("removal")
 class GitHubApiClientTest {
 
     private static final String OWNER = "test-owner";
@@ -249,41 +246,6 @@ class GitHubApiClientTest {
     }
 
     // ===================================================================
-    // getStarCount (deprecated)
-    // ===================================================================
-
-    @Test
-    void getStarCount_returnsStargazersCount() throws IOException {
-        GitHubApiClient spyClient = spy(new GitHubApiClient("fake-token"));
-        doReturn(Map.of("stargazers_count", 42)).when(spyClient).getRepoInfo(OWNER, REPO);
-
-        int stars = spyClient.getStarCount(OWNER, REPO);
-
-        assertThat(stars).isEqualTo(42);
-    }
-
-    @Test
-    void getStarCount_returnsZeroWhenFieldMissing() throws IOException {
-        GitHubApiClient spyClient = spy(new GitHubApiClient("fake-token"));
-        doReturn(Map.<String, Object>of()).when(spyClient).getRepoInfo(OWNER, REPO);
-
-        int stars = spyClient.getStarCount(OWNER, REPO);
-
-        assertThat(stars).isZero();
-    }
-
-    @Test
-    void getStarCount_returnsZeroWhenFieldIsNotANumber() throws IOException {
-        GitHubApiClient spyClient = spy(new GitHubApiClient("fake-token"));
-        doReturn(Map.<String, Object>of("stargazers_count", "not-a-number"))
-                .when(spyClient).getRepoInfo(OWNER, REPO);
-
-        int stars = spyClient.getStarCount(OWNER, REPO);
-
-        assertThat(stars).isZero();
-    }
-
-    // ===================================================================
     // getIssueCount
     // ===================================================================
 
@@ -305,32 +267,6 @@ class GitHubApiClientTest {
         int count = client.getIssueCount(OWNER, REPO, null);
 
         assertThat(count).isEqualTo(100);
-    }
-
-    // ===================================================================
-    // getContributorCount
-    // ===================================================================
-
-    @Test
-    void getContributorCount_withLinkHeader_parsesLastPage() throws Exception {
-        stubResponseWithHeaders(200, "[{}]");
-        String linkValue = "<https://api.github.com/repos/o/r/contributors?per_page=1&page=2>; rel=\"next\", "
-                + "<https://api.github.com/repos/o/r/contributors?per_page=1&page=57>; rel=\"last\"";
-        when(httpHeaders.firstValue("Link")).thenReturn(Optional.of(linkValue));
-
-        int count = client.getContributorCount(OWNER, REPO);
-
-        assertThat(count).isEqualTo(57);
-    }
-
-    @Test
-    void getContributorCount_noLinkHeader_countsSinglePage() throws Exception {
-        stubResponseWithHeaders(200, "[{\"login\":\"alice\"},{\"login\":\"bob\"}]");
-        when(httpHeaders.firstValue("Link")).thenReturn(Optional.empty());
-
-        int count = client.getContributorCount(OWNER, REPO);
-
-        assertThat(count).isEqualTo(2);
     }
 
     // ===================================================================
