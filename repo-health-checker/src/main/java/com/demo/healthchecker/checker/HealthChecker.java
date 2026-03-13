@@ -46,6 +46,9 @@ public class HealthChecker {
     private static final int WEIGHT_COMMIT_STALE = 5;
     private static final int WEIGHT_COMMIT_OLD = 0;
 
+    // Maximum achievable score
+    private static final int MAX_SCORE = 100;
+
     private final GitHubApiClient client;
 
     /**
@@ -109,6 +112,7 @@ public class HealthChecker {
         long lastCommitDaysAgo = calculateDaysAgo(lastCommitDate);
         score += scoreCommitRecency(lastCommitDaysAgo);
 
+        score = Math.min(score, MAX_SCORE);
         logger.info("Health check complete for {}/{}: score={}/100", owner, repo, score);
 
         return new RepoHealthReport(
