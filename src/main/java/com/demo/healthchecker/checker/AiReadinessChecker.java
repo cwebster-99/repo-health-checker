@@ -15,7 +15,7 @@ import java.util.Map;
  * <p>The checker inspects six indicators and produces a score from 0 to 6:
  * <ol>
  *   <li>Copilot instructions ({@code .github/copilot-instructions.md})</li>
- *   <li>Custom agents ({@code .github/copilot/agents.md})</li>
+ *   <li>Custom agents ({@code *.agent.md} files under {@code .github/agents/})</li>
  *   <li>Custom skills ({@code .github/copilot/skills/} directory)</li>
  *   <li>Prompt files ({@code *.prompt.md} under {@code .github/})</li>
  *   <li>{@code .gitignore} file</li>
@@ -86,9 +86,9 @@ public class AiReadinessChecker {
     }
 
     private boolean checkCustomAgents(String owner, String repo) throws IOException {
-        logger.info("Checking .github/copilot/agents.md...");
-        boolean exists = client.checkFileExists(owner, repo, ".github/copilot/agents.md");
-        logger.info("agents.md exists: {}", exists);
+        logger.info("Checking for *.agent.md files under .github/agents/...");
+        boolean exists = hasFileWithSuffix(owner, repo, ".github/agents", ".agent.md");
+        logger.info("Found .agent.md file under .github/agents/: {}", exists);
         return exists;
     }
 
