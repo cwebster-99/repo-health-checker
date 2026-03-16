@@ -3,8 +3,6 @@ package com.demo.healthchecker.formatter;
 import com.demo.healthchecker.model.AiReadinessReport;
 import com.demo.healthchecker.model.RepoHealthReport;
 
-import java.util.List;
-
 /**
  * Formats {@link RepoHealthReport} and {@link AiReadinessReport} into
  * a Markdown report document.
@@ -14,8 +12,6 @@ public class ReportFormatter {
     private static final int RATING_EXCELLENT_THRESHOLD = 80;
     private static final int RATING_GOOD_THRESHOLD = 60;
     private static final int RATING_FAIR_THRESHOLD = 40;
-
-    private final RecommendationGenerator recommendationGenerator = new RecommendationGenerator();
 
     /**
      * Formats the given reports as a Markdown document.
@@ -66,17 +62,6 @@ public class ReportFormatter {
         sb.append(String.format("| .gitignore | %s |%n", badge(ai.hasGitignore())));
         sb.append(String.format("| Folder Instructions | %s |%n", badge(ai.hasFolderInstructions())));
         sb.append(String.format("| **AI Readiness Score** | **%d / %d** |%n", ai.score(), ai.maxScore()));
-
-        // --- Recommendations section ---
-        List<String> recommendations = recommendationGenerator.generate(health, ai);
-        sb.append("\n## Recommendations\n\n");
-        if (recommendations.isEmpty()) {
-            sb.append("✅ All checks passed — no recommendations.\n");
-        } else {
-            for (String rec : recommendations) {
-                sb.append(String.format("- %s%n", rec));
-            }
-        }
 
         return sb.toString();
     }

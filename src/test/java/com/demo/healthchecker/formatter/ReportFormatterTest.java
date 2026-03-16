@@ -152,50 +152,6 @@ class ReportFormatterTest {
     }
 
     // ===================================================================
-    // Recommendations section
-    // ===================================================================
-
-    @Test
-    void format_failedChecks_containsRecommendationsSection() {
-        RepoHealthReport health = new RepoHealthReport(
-                false, false, null, false, null,
-                false, false, false, false,
-                0, 0, 0,
-                false, 0,
-                10
-        );
-        AiReadinessReport ai = new AiReadinessReport(
-                false, false, false, false, false, false, 0, 6
-        );
-
-        String output = formatter.format(health, ai);
-
-        assertThat(output).contains("## Recommendations");
-        assertThat(output).contains("README.md");
-        assertThat(output).contains("LICENSE");
-        assertThat(output).contains(".github/workflows");
-    }
-
-    @Test
-    void format_allChecksPassing_showsNoRecommendationsMessage() {
-        RepoHealthReport health = new RepoHealthReport(
-                true, true, "MIT", true, "GitHub Actions",
-                true, true, true, true,
-                2, 20, 3,
-                true, 10,
-                100
-        );
-        AiReadinessReport ai = new AiReadinessReport(
-                true, true, true, true, true, true, 6, 6
-        );
-
-        String output = formatter.format(health, ai);
-
-        assertThat(output).contains("## Recommendations");
-        assertThat(output).contains("All checks passed");
-    }
-
-    // ===================================================================
     // Helpers
     // ===================================================================
 

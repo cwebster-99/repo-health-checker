@@ -62,4 +62,5 @@ App.java (CLI entry, Picocli @Command)
 ## Existing Customizations
 
 - **Agents:** `reviewer-claude.agent.md`, `reviewer-gpt.agent.md` — dual-model code reviewers (not user-invocable)
+- **Agents:** `tdd.agent.md` — user-invocable test-driven development specialist (Red-Green-Refactor workflow)
 - **Prompts:** `code-review.prompt.md` — dispatches to both reviewer agents for a combined report
