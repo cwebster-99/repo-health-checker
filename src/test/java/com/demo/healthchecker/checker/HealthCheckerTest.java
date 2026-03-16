@@ -67,8 +67,8 @@ class HealthCheckerTest {
         RepoHealthReport report = healthChecker.check(OWNER, REPO);
 
         // README(15) + LICENSE(10) + licenseType(10) + CI(15) + desc(5) + topics(5)
-        // + codeowners(5) + security(5) + stars(5) + issues(15) + commit(15) = 105
-        assertThat(report.healthScore()).isEqualTo(105);
+        // + codeowners(5) + security(5) + stars(5) + issues(15) + commit(15) = 105, capped at 100
+        assertThat(report.healthScore()).isEqualTo(100);
         assertThat(report.hasReadme()).isTrue();
         assertThat(report.hasLicense()).isTrue();
         assertThat(report.licenseType()).isEqualTo("MIT");
