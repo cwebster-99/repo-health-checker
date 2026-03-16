@@ -235,27 +235,7 @@ public class GitHubApiClient {
         return (totalCount instanceof Number n) ? n.intValue() : 0;
     }
 
-    // ---- Deprecated methods ----
-
-    /**
-     * Returns the star count for the given repository.
-     *
-     * @param owner the repository owner
-     * @param repo  the repository name
-     * @return the number of stargazers
-     * @throws IOException if the API call fails
-     * @deprecated Use {@link #getRepoInfo(String, String)} instead and extract
-     *             {@code stargazers_count} from the returned map.
-     */
-    @Deprecated(since = "1.1", forRemoval = true)
-    public int getStarCount(String owner, String repo) throws IOException {
-        Map<String, Object> repoInfo = getRepoInfo(owner, repo);
-        Object count = repoInfo.get("stargazers_count");
-        if (count instanceof Number number) {
-            return number.intValue();
-        }
-        return 0;
-    }
+    // ---- Internal helpers ----
 
     /**
      * Returns the total number of contributors (including anonymous) for the repository.

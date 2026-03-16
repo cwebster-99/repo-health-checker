@@ -14,7 +14,7 @@ package com.demo.healthchecker.model;
  * </ol>
  *
  * @param hasCopilotInstructions whether {@code .github/copilot-instructions.md} exists
- * @param hasCustomAgents        whether {@code .github/copilot/agents.md} exists
+ * @param hasCustomAgents        whether any {@code *.agent.md} files exist under {@code .github/agents/}
  * @param hasCustomSkills        whether {@code .github/copilot/skills/} directory exists
  * @param hasPromptFiles         whether any {@code *.prompt.md} files exist under {@code .github/}
  * @param hasGitignore           whether a {@code .gitignore} file exists

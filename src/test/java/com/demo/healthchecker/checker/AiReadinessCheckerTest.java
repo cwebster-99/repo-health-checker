@@ -40,8 +40,10 @@ class AiReadinessCheckerTest {
     void check_fullyReady_scoreIs6of6() throws IOException {
         when(client.checkFileExists(OWNER, REPO, ".github/copilot-instructions.md"))
                 .thenReturn(true);
-        when(client.checkFileExists(OWNER, REPO, ".github/copilot/agents.md"))
-                .thenReturn(true);
+        when(client.listDirectoryEntries(OWNER, REPO, ".github/agents"))
+                .thenReturn(List.of(
+                        Map.of("type", "file", "name", "tdd.agent.md", "path", ".github/agents/tdd.agent.md")
+                ));
         when(client.hasDirectory(OWNER, REPO, ".github/copilot/skills"))
                 .thenReturn(true);
         when(client.checkFileExists(OWNER, REPO, ".gitignore"))
@@ -80,6 +82,8 @@ class AiReadinessCheckerTest {
                 .thenReturn(false);
         when(client.hasDirectory(OWNER, REPO, ".github/copilot/skills"))
                 .thenReturn(false);
+        when(client.listDirectoryEntries(OWNER, REPO, ".github/agents"))
+                .thenReturn(List.of());
         when(client.listDirectoryEntries(OWNER, REPO, ".github"))
                 .thenReturn(List.of());
         when(client.listDirectoryEntries(OWNER, REPO, "src"))
@@ -104,8 +108,8 @@ class AiReadinessCheckerTest {
     void check_onlyGitignore_scoreIs1() throws IOException {
         when(client.checkFileExists(OWNER, REPO, ".github/copilot-instructions.md"))
                 .thenReturn(false);
-        when(client.checkFileExists(OWNER, REPO, ".github/copilot/agents.md"))
-                .thenReturn(false);
+        when(client.listDirectoryEntries(OWNER, REPO, ".github/agents"))
+                .thenReturn(List.of());
         when(client.hasDirectory(OWNER, REPO, ".github/copilot/skills"))
                 .thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".gitignore"))
@@ -133,8 +137,10 @@ class AiReadinessCheckerTest {
     void check_copilotInstructionsAndAgentsOnly_scoreIs2() throws IOException {
         when(client.checkFileExists(OWNER, REPO, ".github/copilot-instructions.md"))
                 .thenReturn(true);
-        when(client.checkFileExists(OWNER, REPO, ".github/copilot/agents.md"))
-                .thenReturn(true);
+        when(client.listDirectoryEntries(OWNER, REPO, ".github/agents"))
+                .thenReturn(List.of(
+                        Map.of("type", "file", "name", "tdd.agent.md", "path", ".github/agents/tdd.agent.md")
+                ));
         when(client.hasDirectory(OWNER, REPO, ".github/copilot/skills"))
                 .thenReturn(false);
         when(client.checkFileExists(OWNER, REPO, ".gitignore"))
@@ -165,6 +171,8 @@ class AiReadinessCheckerTest {
                 .thenReturn(false);
         when(client.hasDirectory(OWNER, REPO, ".github/copilot/skills"))
                 .thenReturn(false);
+        when(client.listDirectoryEntries(OWNER, REPO, ".github/agents"))
+                .thenReturn(List.of());
 
         // .github contains a subdirectory "prompts"
         when(client.listDirectoryEntries(OWNER, REPO, ".github"))
@@ -208,6 +216,8 @@ class AiReadinessCheckerTest {
                 .thenReturn(false);
         when(client.hasDirectory(OWNER, REPO, ".github/copilot/skills"))
                 .thenReturn(false);
+        when(client.listDirectoryEntries(OWNER, REPO, ".github/agents"))
+                .thenReturn(List.of());
 
         // Entry missing "type" key — should be skipped without error
         when(client.listDirectoryEntries(OWNER, REPO, ".github"))
